@@ -17,6 +17,6 @@
 
 if (__FILE__ == $_SERVER['SCRIPT_FILENAME']) { die(); }
 
-cfct_page();
+vnl_include('page');
 
 ?>

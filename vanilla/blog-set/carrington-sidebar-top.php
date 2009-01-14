@@ -59,4 +59,4 @@ if (!empty($about_text)) {
 <?php
 }
 ?>
-</div><!--#sidebar-->
+</div><!-- #sidebar-top -->

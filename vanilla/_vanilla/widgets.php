@@ -1,13 +1,116 @@
 <?php
+/*
+	Copyright (c) 2008, Australis Media Pty Ltd. All rights reserved.
+	
+	Australis Media Pty Ltd has made the contents of this file
+	available under a CC-GNU-GPL license:
+	
+	 http://creativecommons.org/licenses/GPL/2.0/
+	
+	 A copy of the full license can be found as part of this
+	 distribution in the file LICENSE.TXT
+	
+	You may use the Vanilla theme software in accordance with the
+	terms of that license. You agree that you are solely responsible
+	for your use of the Vanilla theme software and you represent and 
+	warrant to Australis Media Pty Ltd that your use of the Vanilla
+	theme software will comply with the CC-GNU-GPL.
+*/
+
 if (__FILE__ == $_SERVER['SCRIPT_FILENAME']) { die(); }
 
 // Load widget PHP files from the widgets directory
 function vanilla_load_widgets() {
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$files = cfct_files(CFCT_PATH.$set.'widgets');
+	global $tpl_set;
+	$files = cfct_files(CFCT_PATH.$tpl_set.'widgets');
 	foreach ($files as $file) {
-		include(CFCT_PATH.$set.'widgets/'.$file);
+		include(CFCT_PATH.$tpl_set.'widgets/'.$file);
 	}
+}
+
+function vanilla_widget_block_wrapper($block){
+	// called from within a dynamic PHPTAL macro (below) to stop it outputting a '1' to screen.
+	if (!dynamic_sidebar($block)) {
+		// do nothing;
+	}
+}
+
+function vanilla_widget_template_markup($block=null) {
+	global $wp_registered_sidebars, $wp_registered_widgets;
+	
+	$tpl_source = "";
+
+	$block = sanitize_title($block);
+	foreach ( (array) $wp_registered_sidebars as $key => $value ) {
+		if ( sanitize_title($value['name']) == $block ) {
+			$block = $key;
+			break;
+		}
+	}
+
+	$sidebars_widgets = wp_get_sidebars_widgets();
+
+	if ( empty($wp_registered_sidebars[$block]) || !array_key_exists($block, $sidebars_widgets) || !is_array($sidebars_widgets[$block]) || empty($sidebars_widgets[$block]) )
+		return "";
+
+	$sidebar = $wp_registered_sidebars[$block];
+
+	foreach ( (array) $sidebars_widgets[$block] as $id ) {
+		$params = array_merge(
+			array( array_merge( $sidebar, array('widget_id' => $id, 'widget_name' => $wp_registered_widgets[$id]['name']) ) ),
+			(array) $wp_registered_widgets[$id]['params']
+		);
+
+		$params = apply_filters( 'dynamic_sidebar_params', $params );
+		$callback = $wp_registered_widgets[$id]['callback'];
+		$widget_name = str_replace("widget_", "", strtolower($callback));
+		$active_template = vanilla_get_template('widgets/' . str_replace("_", "-", $widget_name) . ".html");
+		
+		if (!$active_template) return "";
+		
+		//echo $widget_name . " " . $widget_filename;
+
+		if ( is_callable($callback) ) {
+			call_user_func_array($callback, $params);
+			
+			$tpl_source .= '<span metal:use-macro="'.$active_template.'/loader" />' . "\n" .
+					'<span tal:condition="php:VANILLA_DEBUG" class="widget-debug">WIDGET: '.$widget_name.'</span>' . "\n" .
+					'<span metal:define-slot="'.$widget_name.'" />' . "\n";	
+		}
+	}
+	return $tpl_source;
+}
+
+function vanilla_widget_block($block=null){
+	$block = sanitize_title_with_dashes(strtolower($block));
+	
+	// Apply action
+	do_action('vanilla_widget_' . str_replace('-', '_', $block) . '_before');
+	
+	if ( function_exists('dynamic_sidebar') && is_sidebar_active($block) ) {
+		
+		$tpl_source = '<metal:block define-macro="'.str_replace("-", "_", $block).'">' . "\n" .
+				"<!-- widget block: ".$block." -->\n" .
+				'<span tal:condition="php:VANILLA_DEBUG" class="widget-debug">'.$block.'</span>' . "\n";
+		$tpl_source .= vanilla_widget_template_markup($block);
+		$tpl_source .= '${php:vanilla_widget_block_wrapper(\''.$block.'\')}' . "\n" .
+				'</metal:block><metal:block use-macro="'.str_replace("-", "_", $block).'" />'."\n";
+		
+		//echo $tpl_source;
+		
+		echo "\t\t<div id=\"" . $block . "\" class=\"block\">\n";
+		
+		// Load and fire the PHPTAL template!
+		$$block = new PHPTAL();
+		global $tpl_set;
+		$$block->setSource($tpl_source, $tpl_set.$block);
+		vanilla_output_page($$block);
+		
+		echo "</div>\n";
+	}
+	
+	// Apply action
+	do_action('vanilla_widget_' . str_replace('-', '_', $block) . '_after');
 }
 
 // Make widget registration really easy

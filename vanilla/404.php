@@ -17,6 +17,6 @@
 
 if (__FILE__ == $_SERVER['SCRIPT_FILENAME']) { die(); }
 
-cfct_error('404');
+vnl_include('404');
 
 ?>

@@ -1,22 +1,19 @@
 <div tal:replace="">
-<!--
-
-Australis Media has made the contents of this file
-available under a CC-GNU-GPL license:
-
- http://creativecommons.org/licenses/GPL/2.0/
-
- A copy of the full license can be found as part of this
- distribution in the file LICENSE.TXT
-
-You may use the Vanilla theme software in accordance
-with the terms of that license. You agree that you are
-solely responsible for your use of the Vanilla theme
-software and you represent and warrant to Australis Media
-that your use of the Vanilla theme software will comply
-with the CC-GNU-GPL.
-
--->
+	Copyright (c) 2008, Australis Media Pty Ltd. All rights reserved.
+	
+	Australis Media Pty Ltd has made the contents of this file
+	available under a CC-GNU-GPL license:
+	
+	 http://creativecommons.org/licenses/GPL/2.0/
+	
+	 A copy of the full license can be found as part of this
+	 distribution in the file LICENSE.TXT
+	
+	You may use the Vanilla theme software in accordance with the
+	terms of that license. You agree that you are solely responsible
+	for your use of the Vanilla theme software and you represent and 
+	warrant to Australis Media Pty Ltd that your use of the Vanilla
+	theme software will comply with the CC-GNU-GPL.
 </div>
 
 <metal:block define-macro="loader">
@@ -43,9 +40,8 @@ with the CC-GNU-GPL.
 	
 	<metal:block fill-slot="utility">
 		${php: do_action('vanilla_before_utility_grid')}
-		<tal:block define="global utl_class php: str_replace('gg','g', vanilla['utility'])" />
 		<tal:block condition="php: vanilla['utility'] != 'yui-ga'">
-			<div id="utility" class="yui-d3 ${utl_class}">
+			<div id="utility" class="yui-d3 ${php: str_replace('gg','g', vanilla['utility'])}">
 				<tal:block use-macro="vanilla_utility_4_col" condition="php: vanilla['utility'] == 'yui-gg'" tal:comment="4 utility columns" />
 				<tal:block condition="php: vanilla['utility'] != 'yui-gg'">
 					<div class="yui-u first">

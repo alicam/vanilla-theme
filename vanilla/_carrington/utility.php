@@ -19,16 +19,16 @@ if (__FILE__ == $_SERVER['SCRIPT_FILENAME']) { die(); }
 
 function cfct_die($str = '') {
 	if (!empty($str)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		include(CFCT_PATH.$set.'error/exit.php');
+		global $tpl_set;
+		include(CFCT_PATH.$tpl_set.'error/exit.php');
 		die();
 	}
 }
 
 function cfct_banner($str = '') {
 	if (!empty($str)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		include(CFCT_PATH.$set.'misc/banner.php');
+		global $tpl_set;
+		include(CFCT_PATH.$tpl_set.'misc/banner.php');
 	}
 }
 
@@ -57,17 +57,17 @@ function cfct_load_plugins() {
 		include(CFCT_PATH.'plugins/'.$file);
 	}
 	// load template set-specific plugins
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$files = cfct_files(CFCT_PATH.$set.'plugins');
+	global $tpl_set;
+	$files = cfct_files(CFCT_PATH.$tpl_set.'plugins');
 	foreach ($files as $file) {
-		include(CFCT_PATH.$set.'plugins/'.$file);
+		include(CFCT_PATH.$tpl_set.'plugins/'.$file);
 	}
 }
 
 function cfct_default_file($dir) {
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
+	global $tpl_set;
 	$fancy = $dir.'-default.php';
-	file_exists(CFCT_PATH.$set.$dir.'/'.$fancy) ? $default = $fancy : $default = 'default.php';
+	file_exists(CFCT_PATH.$tpl_set.$dir.'/'.$fancy) ? $default = $fancy : $default = 'default.php';
 	return $default;
 }
 
@@ -174,20 +174,20 @@ function cfct_filename($dir, $type = 'default', $keys = array()) {
 			$file = $type;
 	}
 	// fallback for category, author, tag, etc.
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$path = CFCT_PATH.$set.$dir.'/'.$file.'.php';
+	global $tpl_set;
+	$path = CFCT_PATH.$tpl_set.$dir.'/'.$file.'.php';
 	if (!file_exists($path)) {
 		switch ($type) {
 			case 'author':
 			case 'category':
 			case 'tag':
-				$archive_file = CFCT_PATH.$set.$dir.'/archive.php';
+				$archive_file = CFCT_PATH.$tpl_set.$dir.'/archive.php';
 				if (file_exists($archive_file)) {
 					$path = $archive_file;
 				}
 		}
 	}
-	$default = CFCT_PATH.$set.$dir.'/'.cfct_default_file($dir);
+	$default = CFCT_PATH.$tpl_set.$dir.'/'.cfct_default_file($dir);
 	if (file_exists($path)) {
 		$path = $path;
 	}
@@ -213,14 +213,12 @@ function cfct_template($dir, $keys = array()) {
 
 function cfct_template_file($dir, $file) {
 	$path = '';
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
+	global $tpl_set;
 	if (!empty($file)) {
 		$file = basename($file, '.php');
-		$path = CFCT_PATH.$set.$dir.'/'.$file.'.php';
+		$path = CFCT_PATH.$tpl_set.$dir.'/'.$file.'.php';
 	}
 	if (file_exists($path)) {
-		
-		// Alister - if there is a way to dynamically load PHPTAL template components, do it here...
 		include($path);
 	}
 	else {
@@ -241,8 +239,8 @@ function cfct_choose_general_template($dir) {
 		, 'default'
 	);
 	$new_exec_order = apply_filters('cfct_general_match_order', $exec_order);
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$files = cfct_files(CFCT_PATH.$set.$dir);
+	global $tpl_set;
+	$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	foreach ($new_exec_order as $func) {
 		$func_name = 'cfct_choose_general_template_'.$func;
 		if (function_exists($func_name) && in_array($func, $exec_order)) {
@@ -332,8 +330,8 @@ function cfct_choose_content_template($type = 'content') {
 		, 'default'
 	);
 	$new_exec_order = apply_filters('cfct_content_match_order', $exec_order);
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$files = cfct_files(CFCT_PATH.$set.$type);
+	global $tpl_set;
+	$files = cfct_files(CFCT_PATH.$tpl_set.$type);
 	foreach ($new_exec_order as $func) {
 		$func_name = 'cfct_choose_content_template_'.$func;
 		if (function_exists($func_name) && in_array($func, $exec_order)) {
@@ -470,8 +468,8 @@ function cfct_choose_comment_template() {
 		, 'default'
 	);
 	$new_exec_order = apply_filters('cfct_comment_match_order', $exec_order);
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$files = cfct_files(CFCT_PATH.$set.'comment');
+	global $tpl_set;
+	$files = cfct_files(CFCT_PATH.$tpl_set.'comment');
 	foreach ($new_exec_order as $func) {
 		$func_name = 'cfct_choose_comment_template_'.$func;
 		if (function_exists($func_name) && in_array($func, $exec_order)) {
@@ -577,8 +575,8 @@ function cfct_filter_files($files = array(), $prefix = '') {
 
 function cfct_meta_templates($dir, $files = null) {
 	if (is_null($files)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.$dir);
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	}
 	$matches = cfct_filter_files($files, 'meta-');
 	return apply_filters('cfct_meta_templates', $matches);
@@ -586,8 +584,8 @@ function cfct_meta_templates($dir, $files = null) {
 
 function cfct_cat_templates($dir, $files = null) {
 	if (is_null($files)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.$dir);
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	}
 	$matches = cfct_filter_files($files, 'cat-');
 	return apply_filters('cfct_cat_templates', $matches);
@@ -595,8 +593,8 @@ function cfct_cat_templates($dir, $files = null) {
 
 function cfct_tag_templates($dir, $files = null) {
 	if (is_null($files)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.$dir);
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	}
 	$matches = cfct_filter_files($files, 'tag-');
 	return apply_filters('cfct_tag_templates', $matches);
@@ -604,8 +602,8 @@ function cfct_tag_templates($dir, $files = null) {
 
 function cfct_author_templates($dir, $files = null) {
 	if (is_null($files)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.$dir);
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	}
 	$matches = cfct_filter_files($files, 'author-');
 	return apply_filters('cfct_author_templates', $matches);
@@ -613,8 +611,8 @@ function cfct_author_templates($dir, $files = null) {
 
 function cfct_role_templates($dir, $files = null) {
 	if (is_null($files)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.$dir);
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	}
 	$matches = cfct_filter_files($files, 'role-');
 	return apply_filters('cfct_role_templates', $matches);
@@ -622,8 +620,8 @@ function cfct_role_templates($dir, $files = null) {
 
 function cfct_parent_templates($dir, $files = null) {
 	if (is_null($files)) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.$dir);
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
 	}
 	$matches = cfct_filter_files($files, 'parent-');
 	return apply_filters('cfct_parent_templates', $matches);
@@ -631,8 +629,8 @@ function cfct_parent_templates($dir, $files = null) {
 
 function cfct_comment_templates($type, $files = false) {
 	if (!$files) {
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$files = cfct_files(CFCT_PATH.$set.'comment');
+		global $tpl_set;
+		$files = cfct_files(CFCT_PATH.$tpl_set.'comment');
 	}
 	$matches = array();
 	switch ($type) {

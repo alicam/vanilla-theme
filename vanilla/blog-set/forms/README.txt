@@ -6,7 +6,7 @@ This directory holds forms that may be used in various places throughout the the
 
 These forms can be included in other theme files using the following code:
 
-	<?php cfct_form('comment'); ?>
+	<?php vnl_include('comment'); ?>
 
 Where `comment.php` is the name of the file in the _forms/_ directory that you want to include.
 

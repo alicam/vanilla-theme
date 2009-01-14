@@ -67,7 +67,6 @@ require_once(CFCT_PATH.'PHPTAL.php');
    ======================================== */
 
 include_once(CFCT_PATH.'_carrington/admin.php');
-include_once(CFCT_PATH.'_carrington/templates.php');
 include_once(CFCT_PATH.'_carrington/utility.php');
 include_once(CFCT_PATH.'_carrington/ajax-load.php');
 include_once(CFCT_PATH.'_carrington/sandbox.php');
@@ -82,6 +81,7 @@ include_once(CFCT_PATH.'_vanilla/blocks.php');
 include_once(CFCT_PATH.'_vanilla/widgets.php');
 include_once(CFCT_PATH.'_vanilla/hooks-filters.php');
 include_once(CFCT_PATH.'_vanilla/minify-html.php');
+include_once(CFCT_PATH.'_vanilla/art-direction.php');
 include_once(CFCT_PATH.'_vanilla/phptal-custom.php');
 
 /* ========================================
@@ -157,6 +157,11 @@ define('TARSKIVERSIONFILE', 'http://tarskitheme.com/version.atom');
 
 // Launch
 //require_once(CFCT_PATH.'_tarski/launcher.php');
+
+$tpl_set = vanilla_get_option('vnl_tpl_set').'-set/';
+
+// Load template set's specific functions.php file
+include_once(vanilla_get_template('functions.php'));
 
 cfct_load_plugins();
 

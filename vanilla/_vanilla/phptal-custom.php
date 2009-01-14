@@ -1,5 +1,49 @@
 <?php
+/*
+	Copyright (c) 2008, Australis Media Pty Ltd. All rights reserved.
+	
+	Australis Media Pty Ltd has made the contents of this file
+	available under a CC-GNU-GPL license:
+	
+	 http://creativecommons.org/licenses/GPL/2.0/
+	
+	 A copy of the full license can be found as part of this
+	 distribution in the file LICENSE.TXT
+	
+	You may use the Vanilla theme software in accordance with the
+	terms of that license. You agree that you are solely responsible
+	for your use of the Vanilla theme software and you represent and 
+	warrant to Australis Media Pty Ltd that your use of the Vanilla
+	theme software will comply with the CC-GNU-GPL.
+*/
+
 if (__FILE__ == $_SERVER['SCRIPT_FILENAME']) { die(); }
+
+// Load and execute a specific PHPTAL template for each templated shortcode
+function vanilla_shortcode($shortcode){
+	global $tpl_set, $tpl;
+	
+	$active_template = vanilla_get_template('shortcodes/' . $shortcode . ".html");
+	
+	if (!$active_template) return "";
+	// No need to include the PHP tpl file here. Already loaded at init.
+	
+	$tpl_source = '<metal:block define-macro="'.$shortcode.'_shortcode">' . "\n" .
+		"<!-- shortcode: ".$shortcode." -->\n" .
+		'<span tal:condition="php:VANILLA_DEBUG" class="widget-debug">SHORTCODE: '.$shortcode.'</span>' . "\n" .
+		'<span metal:use-macro="'.$active_template.'/loader" />' . "\n" .
+		'<span metal:define-slot="'.$shortcode.'" />' . "\n" .
+		'</metal:block><metal:block use-macro="'.$shortcode.'_shortcode" />'."\n";
+		
+	//return "<textarea style='width:500px; height:300px;'> $tpl_source </textarea>";
+	
+	// Load and fire the PHPTAL template!
+	$template = new PHPTAL();
+	$template->setSource($tpl_source, $tpl_set.$shortcode);
+	$template->set('vanilla', $tpl);
+	try { return $template->execute(); }
+	catch (Exception $e){ return $e; }
+}
 
 // Using ugly filter to get a return, not echo.
 $comments_number = "";

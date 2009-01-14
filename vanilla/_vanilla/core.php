@@ -1,4 +1,22 @@
 <?php
+/*
+	Copyright (c) 2008, Australis Media Pty Ltd. All rights reserved.
+	
+	Australis Media Pty Ltd has made the contents of this file
+	available under a CC-GNU-GPL license:
+	
+	 http://creativecommons.org/licenses/GPL/2.0/
+	
+	 A copy of the full license can be found as part of this
+	 distribution in the file LICENSE.TXT
+	
+	You may use the Vanilla theme software in accordance with the
+	terms of that license. You agree that you are solely responsible
+	for your use of the Vanilla theme software and you represent and 
+	warrant to Australis Media Pty Ltd that your use of the Vanilla
+	theme software will comply with the CC-GNU-GPL.
+*/
+
 if (__FILE__ == $_SERVER['SCRIPT_FILENAME']) { die(); }
 
 function vanilla_get_option($name) {
@@ -21,13 +39,80 @@ function vanilla_get_option($name) {
 	return $value;
 }
 
+function vnl_include($template) {
+	switch ($template) {
+	
+		// page template
+		case 'page':
+			$file = cfct_default_file('pages');
+			cfct_template_file('pages', $file);
+			break;
+		
+		// content template
+		case 'content':
+		case 'excerpt':
+			$file = cfct_choose_content_template($template);
+			cfct_template_file($template, $file);
+			break;
+		
+		// comment template
+		case 'comment':
+			$file = cfct_choose_comment_template($template);
+			cfct_template_file($template, $file);
+			break;
+		
+		// forms template
+		case 'comment-form':
+		case 'search':
+			cfct_template_file('forms', str_replace('-form','' , $template));
+			break;
+			
+		// misc template
+		case 'banner':
+		case 'image':
+		case 'nav-posts':
+			cfct_template_file('misc', $template);
+			break;
+			
+		// error template
+		case '404':
+		case 'exit':
+			cfct_template_file('error', $template);
+			break;
+		
+		// general template (everything else!)
+		default:
+			$file = cfct_choose_general_template($template);
+			cfct_template_file($template, $file);
+	}
+}
+
 // Check whether a child theme template file exists, otherwise return the vanilla file.
 function vanilla_get_template($path) {
-	$set = vanilla_get_option('vnl_tpl_set').'-set/';
-	$child_template = STYLESHEETPATH.'/'.$set.$path;
-	$parent_template = CFCT_PATH.$set.$path;
+	global $tpl_set;
+	$child_template = STYLESHEETPATH.'/'.$tpl_set.$path;
+	$parent_template = CFCT_PATH.$tpl_set.$path;
 	return ( file_exists($child_template) ) ? $child_template : ( file_exists($parent_template) ) ? $parent_template : false;
 }
+
+// These are all the templates we *always* need (e.g. TAL shortcode templates)
+function vanilla_load_tpl_includes() {
+	global $tpl_set;
+
+	// list of directories containing pairs of PHP/HTML template files. Include the PHP files now for later use...
+	$dirs = array(
+		"shortcodes"
+		// can add more later as they are "thought up"!
+	);
+	foreach ($dirs as $dir) {
+		// load template item from either parent or child theme
+		$files = cfct_files(CFCT_PATH.$tpl_set.$dir);
+		foreach ($files as $file) {
+			include_once(vanilla_get_template($dir.'/'.$file));
+		}
+	}
+}
+add_action('init', 'vanilla_load_tpl_includes');
 
 function vanilla_output_page($template) {
 	global $tpl;
@@ -37,91 +122,6 @@ function vanilla_output_page($template) {
 	
 	try { echo $template->execute(); }
 	catch (Exception $e){ echo $e; }
-}
-
-function vanilla_widget_block_wrapper($block){
-	// called from within a dynamic PHPTAL macro (below) to stop it outputting a '1' to screen.
-	if (!dynamic_sidebar($block)) {
-		// do nothing;
-	}
-}
-
-function vanilla_widget_template_markup($block=null) {
-	global $wp_registered_sidebars, $wp_registered_widgets;
-	
-	$tpl_source = "";
-
-	$block = sanitize_title($block);
-	foreach ( (array) $wp_registered_sidebars as $key => $value ) {
-		if ( sanitize_title($value['name']) == $block ) {
-			$block = $key;
-			break;
-		}
-	}
-
-	$sidebars_widgets = wp_get_sidebars_widgets();
-
-	if ( empty($wp_registered_sidebars[$block]) || !array_key_exists($block, $sidebars_widgets) || !is_array($sidebars_widgets[$block]) || empty($sidebars_widgets[$block]) )
-		return "";
-
-	$sidebar = $wp_registered_sidebars[$block];
-
-	foreach ( (array) $sidebars_widgets[$block] as $id ) {
-		$params = array_merge(
-			array( array_merge( $sidebar, array('widget_id' => $id, 'widget_name' => $wp_registered_widgets[$id]['name']) ) ),
-			(array) $wp_registered_widgets[$id]['params']
-		);
-
-		$params = apply_filters( 'dynamic_sidebar_params', $params );
-		$callback = $wp_registered_widgets[$id]['callback'];
-		$widget_name = str_replace("widget_", "", strtolower($callback));
-		$active_template = vanilla_get_template('widgets/' . str_replace("_", "-", $widget_name) . ".html");
-		
-		if (!$active_template) return "";
-		
-		//echo $widget_name . " " . $widget_filename;
-
-		if ( is_callable($callback) ) {
-			call_user_func_array($callback, $params);
-			
-			$tpl_source .= '<span metal:use-macro="'.$active_template.'/loader" />' . "\n" .
-					'<span tal:condition="php:VANILLA_DEBUG" class="widget-debug">WIDGET: '.$widget_name.'</span>' . "\n" .
-					'<span metal:define-slot="'.$widget_name.'" />' . "\n";	
-		}
-	}
-	return $tpl_source;
-}
-
-function vanilla_widget_block($block=null){
-	$block = sanitize_title_with_dashes(strtolower($block));
-	
-	// Apply action
-	do_action('vanilla_widget_' . str_replace('-', '_', $block) . '_before');
-	
-	if ( function_exists('dynamic_sidebar') && is_sidebar_active($block) ) {
-		
-		$tpl_source = '<metal:block define-macro="'.str_replace("-", "_", $block).'">' . "\n" .
-				"<!-- widget block: ".$block." -->\n" .
-				'<span tal:condition="php:VANILLA_DEBUG" class="widget-debug">'.$block.'</span>' . "\n";
-		$tpl_source .= vanilla_widget_template_markup($block);
-		$tpl_source .= '${php:vanilla_widget_block_wrapper(\''.$block.'\')}' . "\n" .
-				'</metal:block><metal:block use-macro="'.str_replace("-", "_", $block).'" />'."\n";
-		
-		//echo $tpl_source;
-		
-		echo "\t\t<div id=\"" . $block . "\" class=\"block\">\n";
-		
-		// Load and fire the PHPTAL template!
-		$$block = new PHPTAL();
-		$set = vanilla_get_option('vnl_tpl_set').'-set/';
-		$$block->setSource($tpl_source, $set.$block);
-		vanilla_output_page($$block);
-		
-		echo "</div>\n";
-	}
-	
-	// Apply action
-	do_action('vanilla_widget_' . str_replace('-', '_', $block) . '_after');
 }
 
 function vanilla_add_debug_css(){

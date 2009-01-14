@@ -1,0 +1,59 @@
+<div tal:replace="">
+	Copyright (c) 2008, Australis Media Pty Ltd. All rights reserved.
+	
+	Australis Media Pty Ltd has made the contents of this file
+	available under a CC-GNU-GPL license:
+	
+	 http://creativecommons.org/licenses/GPL/2.0/
+	
+	 A copy of the full license can be found as part of this
+	 distribution in the file LICENSE.TXT
+	
+	You may use the Vanilla theme software in accordance with the
+	terms of that license. You agree that you are solely responsible
+	for your use of the Vanilla theme software and you represent and 
+	warrant to Australis Media Pty Ltd that your use of the Vanilla
+	theme software will comply with the CC-GNU-GPL.
+</div>
+
+<div metal:define-macro="loader" tal:omit-tag="">
+
+<div metal:fill-slot="gallery">
+
+	<!-- slot: gallery -->
+	<style type="text/css">
+		.gallery {
+			margin: auto;
+
+		}
+		.gallery-item {
+			float: left;
+			margin: 10px 0 0 0;
+			text-align: center;
+			width: ${vanilla/gallery/itemwidth}%;
+		}
+		.gallery img {
+			border: 2px solid #cfcfcf;
+		}
+		.gallery-caption {
+			margin-left: 0;
+		}
+	</style>
+	<!-- see gallery_shortcode() in wp-includes/media.php -->
+	<div class="gallery">
+		<div tal:repeat="image vanilla/gallery/images" tal:omit-tag="">
+			<dl class="gallery-item">
+				<dt class="gallery-icon">
+					${structure image/link}
+				</dt>
+				<dd class="gallery-caption" tal:condition="image/caption">
+					${image/caption}
+				</dd>
+			</dl>
+			<br style="clear:both" tal:condition="php:repeat.image.number % vanilla['gallery']['columns'] == 0" />
+		</div>
+		<br style="clear:both" />
+	</div><!-- #gallery -->
+</div>
+
+</div>
